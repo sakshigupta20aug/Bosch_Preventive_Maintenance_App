@@ -19,12 +19,15 @@ from pathlib import Path
 st.set_page_config(page_title="Bosch Preventive Maintenance - Model", layout="wide")
 
 # -------------------
-# Paths
+# Paths (LOCAL + GitHub fallback)
 # -------------------
-PROJECT_DIR = Path(r"C:\Users\Admin\Downloads\Internship\Bosch_PMP")
-MODEL_FP = PROJECT_DIR / "models" / "classification_model.pkl"
-METRICS_FP = PROJECT_DIR / "models" / "classification_metrics.json"
-FIG_DIR = PROJECT_DIR / "reports" / "figures"
+LOCAL_MODEL = Path("models/classification_model.pkl")
+LOCAL_METRICS = Path("models/classification_metrics.json")
+LOCAL_FIG_DIR = Path("reports/figures")
+
+# 👉 Replace with your repo details
+GITHUB_MODEL = "https://raw.githubusercontent.com/<your-username>/<your-repo>/main/models/classification_model.pkl"
+GITHUB_METRICS = "https://raw.githubusercontent.com/<your-username>/<your-repo>/main/models/classification_metrics.json"
 
 # -------------------
 # Authentication
@@ -49,13 +52,31 @@ def login():
 # -------------------
 @st.cache_resource
 def load_model():
-    with open(MODEL_FP, "rb") as f:
-        return pickle.load(f)
+    try:
+        if LOCAL_MODEL.exists():
+            with open(LOCAL_MODEL, "rb") as f:
+                return pickle.load(f)
+        else:
+            import requests, io
+            r = requests.get(GITHUB_MODEL)
+            return pickle.load(io.BytesIO(r.content))
+    except Exception as e:
+        st.error(f"❌ Could not load model: {e}")
+        return None
 
 @st.cache_data
 def load_metrics():
-    with open(METRICS_FP, "r") as f:
-        return json.load(f)
+    try:
+        if LOCAL_METRICS.exists():
+            with open(LOCAL_METRICS, "r") as f:
+                return json.load(f)
+        else:
+            import requests
+            r = requests.get(GITHUB_METRICS)
+            return r.json()
+    except Exception as e:
+        st.error(f"❌ Could not load metrics: {e}")
+        return None
 
 # -------------------
 # Pages
@@ -63,26 +84,31 @@ def load_metrics():
 def page_overview():
     st.header("Model Overview")
     metrics = load_metrics()
+    if not metrics:
+        st.warning("Metrics not available.")
+        return
 
     st.subheader("📊 Classification Report")
-    st.text(metrics["classification_report"])
+    st.text(metrics.get("classification_report", "N/A"))
 
     st.subheader("✅ Key Metrics")
     st.json({
-        "ROC AUC": round(metrics["roc_auc"],4),
-        "PR AUC": round(metrics["pr_auc"],4),
-        "Positive Rate (test set)": f"{metrics['positive_rate_test']*100:.2f}%"
+        "ROC AUC": round(metrics.get("roc_auc", 0),4),
+        "PR AUC": round(metrics.get("pr_auc", 0),4),
+        "Positive Rate (test set)": f"{metrics.get('positive_rate_test',0)*100:.2f}%"
     })
 
     st.subheader("🔲 Confusion Matrix")
-    cm = metrics["confusion_matrix"]
+    cm = metrics.get("confusion_matrix", [[0,0],[0,0]])
     cm_df = pd.DataFrame(cm, index=["Actual Pass (0)", "Actual Fail (1)"], 
                               columns=["Pred Pass (0)", "Pred Fail (1)"])
     st.dataframe(cm_df, use_container_width=True)
 
     st.subheader("📉 Saved Figures")
-    st.image(str(FIG_DIR / "confusion_matrix.png"), caption="Confusion Matrix Plot")
-    st.image(str(FIG_DIR / "precision_recall_curve.png"), caption="Precision-Recall Curve")
+    if (LOCAL_FIG_DIR / "confusion_matrix.png").exists():
+        st.image(str(LOCAL_FIG_DIR / "confusion_matrix.png"), caption="Confusion Matrix Plot")
+    if (LOCAL_FIG_DIR / "precision_recall_curve.png").exists():
+        st.image(str(LOCAL_FIG_DIR / "precision_recall_curve.png"), caption="Precision-Recall Curve")
 
 def page_predict():
     st.header("Upload Data for Prediction")
@@ -93,32 +119,34 @@ def page_predict():
         st.write("Preview of uploaded data:")
         st.dataframe(df_new.head(10), use_container_width=True)
 
-        # Load model
         model = load_model()
+        if model is None:
+            st.error("Model not loaded.")
+            return
 
-        # Get training feature names from model
-        model_features = model.get_booster().feature_names
+        # Get feature names
+        try:
+            model_features = model.get_booster().feature_names
+        except:
+            st.warning("⚠️ Model does not expose feature names. Using uploaded columns.")
+            model_features = list(df_new.columns)
 
-        # Drop columns not in model features (e.g., Id, target)
+        # Align features
         X_new = df_new.copy()
         for col in X_new.columns:
             if col not in model_features:
                 X_new = X_new.drop(columns=[col])
-
-        # Reorder columns to match training
         X_new = X_new[model_features]
 
-        # Make predictions
+        # Predictions
         preds = model.predict(X_new)
         df_new["prediction"] = preds
 
-        # --- Summary ---
         fail_rate = (df_new["prediction"].mean() * 100).round(2)
         st.subheader("📊 Prediction Summary")
         st.write(f"✅ Predicted Pass: {(100 - fail_rate):.2f}%")
         st.write(f"⚠️ Predicted Fail: {fail_rate:.2f}%")
 
-        # Plot prediction distribution
         st.subheader("📉 Prediction Distribution")
         counts = df_new["prediction"].value_counts().reindex([0, 1], fill_value=0)
         fig, ax = plt.subplots()
@@ -129,11 +157,9 @@ def page_predict():
         plt.tight_layout()
         st.pyplot(fig)
 
-        # --- Preview ---
         st.subheader("Predicted Data (first 20 rows)")
         st.dataframe(df_new.head(20), use_container_width=True)
 
-        # --- Download ---
         csv = df_new.to_csv(index=False).encode("utf-8")
         st.download_button("Download predictions CSV", csv, file_name="predictions.csv")
 
