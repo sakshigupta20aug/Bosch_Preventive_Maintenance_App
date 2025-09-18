@@ -12,6 +12,8 @@ import seaborn as sns
 import pickle
 import json
 from pathlib import Path
+import requests
+from io import BytesIO
 
 # -------------------
 # Page Config
@@ -28,6 +30,8 @@ LOCAL_FIG_DIR = Path("reports/figures")
 # 👉 Replace with your repo details
 GITHUB_MODEL = "https://raw.githubusercontent.com/<your-username>/<your-repo>/main/models/classification_model.pkl"
 GITHUB_METRICS = "https://raw.githubusercontent.com/<your-username>/<your-repo>/main/models/classification_metrics.json"
+GITHUB_FIG_CM = "https://raw.githubusercontent.com/<your-username>/<your-repo>/main/reports/figures/confusion_matrix.png"
+GITHUB_FIG_PR = "https://raw.githubusercontent.com/<your-username>/<your-repo>/main/reports/figures/precision_recall_curve.png"
 
 # -------------------
 # Authentication
@@ -57,9 +61,8 @@ def load_model():
             with open(LOCAL_MODEL, "rb") as f:
                 return pickle.load(f)
         else:
-            import requests, io
             r = requests.get(GITHUB_MODEL)
-            return pickle.load(io.BytesIO(r.content))
+            return pickle.load(BytesIO(r.content))
     except Exception as e:
         st.error(f"❌ Could not load model: {e}")
         return None
@@ -71,7 +74,6 @@ def load_metrics():
             with open(LOCAL_METRICS, "r") as f:
                 return json.load(f)
         else:
-            import requests
             r = requests.get(GITHUB_METRICS)
             return r.json()
     except Exception as e:
@@ -105,10 +107,19 @@ def page_overview():
     st.dataframe(cm_df, use_container_width=True)
 
     st.subheader("📉 Saved Figures")
-    if (LOCAL_FIG_DIR / "confusion_matrix.png").exists():
-        st.image(str(LOCAL_FIG_DIR / "confusion_matrix.png"), caption="Confusion Matrix Plot")
-    if (LOCAL_FIG_DIR / "precision_recall_curve.png").exists():
-        st.image(str(LOCAL_FIG_DIR / "precision_recall_curve.png"), caption="Precision-Recall Curve")
+    # Local fallback first, else GitHub
+    cm_path = LOCAL_FIG_DIR / "confusion_matrix.png"
+    pr_path = LOCAL_FIG_DIR / "precision_recall_curve.png"
+
+    if cm_path.exists():
+        st.image(str(cm_path), caption="Confusion Matrix Plot")
+    else:
+        st.image(GITHUB_FIG_CM, caption="Confusion Matrix Plot")
+
+    if pr_path.exists():
+        st.image(str(pr_path), caption="Precision-Recall Curve")
+    else:
+        st.image(GITHUB_FIG_PR, caption="Precision-Recall Curve")
 
 def page_predict():
     st.header("Upload Data for Prediction")
@@ -124,7 +135,6 @@ def page_predict():
             st.error("Model not loaded.")
             return
 
-        # Get feature names
         try:
             model_features = model.get_booster().feature_names
         except:
@@ -138,7 +148,6 @@ def page_predict():
                 X_new = X_new.drop(columns=[col])
         X_new = X_new[model_features]
 
-        # Predictions
         preds = model.predict(X_new)
         df_new["prediction"] = preds
 
