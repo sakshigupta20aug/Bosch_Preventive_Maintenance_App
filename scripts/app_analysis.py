@@ -65,7 +65,8 @@ def plt_to_streamlit(fig):
 def page_overview(df):
     st.header("Dataset Overview")
     st.write("Shape:", df.shape)
-    st.dataframe(df.head(10), use_container_width=True)
+    with st.expander("View Dataset"):
+        st.dataframe(df.head(10), use_container_width=True)
 
 def page_class_distribution(df):
     st.header("Class Distribution")
@@ -76,6 +77,8 @@ def page_class_distribution(df):
     ax.set_xticklabels(["Pass (0)", "Fail (1)"], rotation=0)
     ax.set_ylabel("Count")
     plt_to_streamlit(fig)
+    with st.expander("View Counts Table"):
+        st.dataframe(counts.to_frame("Count"), use_container_width=True)
 
 def page_cycle_time(df):
     st.header("Cycle Time Analysis")
@@ -106,7 +109,8 @@ def page_failure_buckets(df):
     summary = (df.groupby("cycle_bucket")["target"]
                  .agg(total="count", failed="sum").reset_index())
     summary["failure_rate_%"] = (summary["failed"]/summary["total"]*100).round(2)
-    st.dataframe(summary, use_container_width=True)
+    with st.expander("View Table"):
+        st.dataframe(summary, use_container_width=True)
     fig, ax = plt.subplots()
     sns.barplot(x="cycle_bucket", y="failure_rate_%", data=summary, ax=ax, palette="viridis")
     plt_to_streamlit(fig)
@@ -118,7 +122,8 @@ def page_feature_averages(df):
         st.warning("No numeric summary columns found.")
         return
     summary = df.groupby("target")[cols].mean().round(4)
-    st.dataframe(summary, use_container_width=True)
+    with st.expander("View Table"):
+        st.dataframe(summary, use_container_width=True)
     fig, ax = plt.subplots()
     summary.T.plot(kind="bar", ax=ax)
     ax.set_ylabel("Average Value")
@@ -132,18 +137,21 @@ def page_correlations(df):
         return
     sample = df[num_cols].dropna().sample(n=min(20000,len(df)), random_state=42)
     corrs = sample.corr()["target"].abs().drop("target").sort_values(ascending=False).head(15)
-    st.dataframe(corrs.to_frame("abs_corr"), use_container_width=True)
+    with st.expander("View Table"):
+        st.dataframe(corrs.to_frame("abs_corr"), use_container_width=True)
     fig, ax = plt.subplots(figsize=(7,4))
     corrs.plot(kind="bar", ax=ax)
     plt_to_streamlit(fig)
 
 def page_missing(df):
     st.header("Missing Values")
-    st.dataframe(df.isna().sum().sort_values(ascending=False).head(20), use_container_width=True)
+    with st.expander("View Table"):
+        st.dataframe(df.isna().sum().sort_values(ascending=False).head(20), use_container_width=True)
 
 def page_top_records(df):
     st.header("Top Records")
-    st.dataframe(df.head(20), use_container_width=True)
+    with st.expander("View Table"):
+        st.dataframe(df.head(20), use_container_width=True)
 
 # -------------------
 # Dashboard Controller
