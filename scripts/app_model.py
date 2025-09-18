@@ -21,10 +21,10 @@ st.set_page_config(page_title="Bosch Preventive Maintenance - Model", layout="wi
 # -------------------
 # Paths
 # -------------------
-project_dir = Path(r"C:\Users\Admin\Downloads\Internship\Bosch_PMP")
-model_fp = project_dir / "models" / "classification_model.pkl"
-metrics_fp = project_dir / "models" / "classification_metrics.json"
-fig_dir = project_dir / "reports" / "figures"
+PROJECT_DIR = Path(r"C:\Users\Admin\Downloads\Internship\Bosch_PMP")
+MODEL_FP = PROJECT_DIR / "models" / "classification_model.pkl"
+METRICS_FP = PROJECT_DIR / "models" / "classification_metrics.json"
+FIG_DIR = PROJECT_DIR / "reports" / "figures"
 
 # -------------------
 # Authentication
@@ -49,12 +49,12 @@ def login():
 # -------------------
 @st.cache_resource
 def load_model():
-    with open(model_fp, "rb") as f:
+    with open(MODEL_FP, "rb") as f:
         return pickle.load(f)
 
 @st.cache_data
 def load_metrics():
-    with open(metrics_fp, "r") as f:
+    with open(METRICS_FP, "r") as f:
         return json.load(f)
 
 # -------------------
@@ -81,8 +81,8 @@ def page_overview():
     st.dataframe(cm_df, use_container_width=True)
 
     st.subheader("📉 Saved Figures")
-    st.image(str(fig_dir / "confusion_matrix.png"), caption="Confusion Matrix Plot")
-    st.image(str(fig_dir / "precision_recall_curve.png"), caption="Precision-Recall Curve")
+    st.image(str(FIG_DIR / "confusion_matrix.png"), caption="Confusion Matrix Plot")
+    st.image(str(FIG_DIR / "precision_recall_curve.png"), caption="Precision-Recall Curve")
 
 def page_predict():
     st.header("Upload Data for Prediction")

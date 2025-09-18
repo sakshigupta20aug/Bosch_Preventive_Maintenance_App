@@ -18,8 +18,8 @@ st.set_page_config(page_title="Bosch Preventive Maintenance - Analytics", layout
 # -------------------
 # Paths
 # -------------------
-project_dir = Path(r"C:\Users\Admin\Downloads\Internship\Bosch_PMP")
-data_fp = project_dir / "data" / "processed" / "bosch_clean.csv"
+PROJECT_DIR = Path(r"C:\Users\Admin\Downloads\Internship\Bosch_PMP")
+DATA_FP = PROJECT_DIR / "data" / "processed" / "bosch_clean.csv"
 
 # -------------------
 # Authentication
@@ -144,7 +144,7 @@ def page_top_records(df):
 # Dashboard Controller
 # -------------------
 def dashboard():
-    df = load_data(data_fp)
+    df = load_data(DATA_FP)
     if df is None:
         st.error("Dataset not found. Please check path.")
         return
