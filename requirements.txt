@@ -1,0 +1,19 @@
+# Core
+pandas
+numpy
+scikit-learn
+xgboost
+
+# Visualization
+matplotlib
+seaborn
+
+# Streamlit app
+streamlit
+
+# Database connection
+sqlalchemy
+pyodbc
+
+# Optional (if used in notebooks or dashboards)
+openpyxl      # for Excel export

@@ -1,0 +1,22 @@
+# =========================
+# Ignore raw Bosch data (just in case)
+# =========================
+data/bosch/                  # ignore all raw Bosch data
+!data/processed/bosch_clean.csv   # track only cleaned dataset
+
+# =========================
+# Ignore cache / temp
+# =========================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.ipynb_checkpoints/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# =========================
+# Ignore logs
+# =========================
+*.log
