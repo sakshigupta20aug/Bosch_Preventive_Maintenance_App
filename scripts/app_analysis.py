@@ -16,10 +16,12 @@ from pathlib import Path
 st.set_page_config(page_title="Bosch Preventive Maintenance - Analytics", layout="wide")
 
 # -------------------
-# Paths
+# Dataset Path (LOCAL + CLOUD handling)
 # -------------------
-PROJECT_DIR = Path(r"C:\Users\Admin\Downloads\Internship\Bosch_PMP")
-DATA_FP = PROJECT_DIR / "data" / "processed" / "bosch_clean.csv"
+LOCAL_PATH = Path(__file__).resolve().parents[1] / "data" / "processed" / "bosch_clean.csv"
+
+# ✅ Replace with your GitHub username & repo name
+GITHUB_RAW = "https://raw.githubusercontent.com/sakshigupta20aug/Bosch_Preventive_Maintenance_App/main/data/processed/bosch_clean.csv"
 
 # -------------------
 # Authentication
@@ -43,11 +45,14 @@ def login():
 # Load Data
 # -------------------
 @st.cache_data
-def load_data(path):
+def load_data():
     try:
-        df = pd.read_csv(path, low_memory=False)
-        return df
-    except FileNotFoundError:
+        if LOCAL_PATH.exists():
+            return pd.read_csv(LOCAL_PATH, low_memory=False)
+        else:
+            return pd.read_csv(GITHUB_RAW, low_memory=False)
+    except Exception as e:
+        st.error(f"❌ Error loading dataset: {e}")
         return None
 
 def plt_to_streamlit(fig):
@@ -144,9 +149,9 @@ def page_top_records(df):
 # Dashboard Controller
 # -------------------
 def dashboard():
-    df = load_data(DATA_FP)
+    df = load_data()
     if df is None:
-        st.error("Dataset not found. Please check path.")
+        st.error("Dataset not found. Please check path or GitHub link.")
         return
 
     st.title("📊 Bosch Preventive Maintenance – Analytics Dashboard")
