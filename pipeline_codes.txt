@@ -80,11 +80,12 @@ IF %ERRORLEVEL% NEQ 0 (
 echo Git update completed
 
 REM -------------------------
-REM Step 6: Trigger Streamlit apps
+REM Step 6: Open deployed Streamlit apps
 REM -------------------------
-echo Triggering Streamlit apps...
-start "" "python C:\Users\Admin\Downloads\Internship\Bosch_PMP\scripts\app_analysis.py"
-start "" "python C:\Users\Admin\Downloads\Internship\Bosch_PMP\scripts\app_model.py"
+echo Opening deployed Streamlit apps in browser...
+start https://boschappanalysis.streamlit.app/
+start https://boschappmodel.streamlit.app/
+
 
 echo ==================================================
 echo Pipeline Completed Successfully!
