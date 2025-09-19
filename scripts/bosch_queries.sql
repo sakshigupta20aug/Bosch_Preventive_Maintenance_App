@@ -1,4 +1,4 @@
-select * from bosch_data;
+﻿select * from bosch_data;
 
 ---------------------------------------------------------
 -- BOSCH Preventive Maintenance Project
@@ -12,9 +12,25 @@ select * from bosch_data;
 --
 -- Objective:
 -- To demonstrate SQL-based descriptive and diagnostic analytics
--- which are later used in Power BI dashboards.
----------------------------------------------------------
 
+---------------------------------------------------------
+/*
+Class Distribution (Pass vs Fail) → Show how many products pass vs fail QC.
+
+Cycle Time Summary → Avg, min, max cycle time across units.
+
+Pass vs Fail Comparison → Differences in num_mean, num_median, cycle_time.
+
+Numeric Feature Summary → Statistical summary for num_mean.
+
+Failure Rate by Cycle Time Buckets → Trend of failure vs production cycle time.
+
+Missing Value Check → Ensure key engineered features are not null.
+
+Top 10 Records → Sample inspection data table.
+
+Failure Count per 1000 Units → Failure density metric for planners.
+*/
 
 ---------------------------------------------------------
 -- 1. Class Distribution (Pass vs Fail)
@@ -28,13 +44,13 @@ GROUP BY target;
 
 
 ---------------------------------------------------------
--- 2. Average, Min, Max Cycle Time
----------------------------------------------------------
-SELECT 
-    AVG(cycle_time) AS avg_cycle_time,
-    MIN(cycle_time) AS min_cycle_time,
-    MAX(cycle_time) AS max_cycle_time
-FROM bosch_data;
+	-- 2. Cycle Time Summary - Average, Min, Max Cycle Time
+	---------------------------------------------------------
+	SELECT 
+		AVG(cycle_time) AS avg_cycle_time,
+		MIN(cycle_time) AS min_cycle_time,
+		MAX(cycle_time) AS max_cycle_time
+	FROM bosch_data;
 
 
 ---------------------------------------------------------
